@@ -1,0 +1,52 @@
+name: 'monit.rs OpenAPI diff'
+description: 'Detect breaking changes in your OpenAPI spec between the PR and its base branch. Posts a summary comment.'
+author: 'monit.rs'
+branding:
+  icon: 'git-pull-request'
+  color: 'green'
+
+inputs:
+  spec:
+    description: 'Path to the OpenAPI spec (JSON or YAML) in the PR head. Required.'
+    required: true
+  base-spec:
+    description: 'Path to the spec on the base branch. Defaults to the same path as `spec`.'
+    required: false
+    default: ''
+  fail-on-breaking:
+    description: 'Fail the check when any breaking change is detected. Set to `false` to only report.'
+    required: false
+    default: 'true'
+  comment:
+    description: 'Post the diff summary as a PR comment. Set to `false` to only annotate the run.'
+    required: false
+    default: 'true'
+  api-url:
+    description: 'Override the monit.rs API base URL. Only needed for self-hosted or staging.'
+    required: false
+    default: 'https://monit.rs'
+
+outputs:
+  breaking:
+    description: 'Number of breaking changes detected'
+    value: ${{ steps.diff.outputs.breaking }}
+  non-breaking:
+    description: 'Number of non-breaking changes detected'
+    value: ${{ steps.diff.outputs.non_breaking }}
+  info:
+    description: 'Number of info-level changes detected'
+    value: ${{ steps.diff.outputs.info }}
+
+runs:
+  using: composite
+  steps:
+    - id: diff
+      shell: bash
+      env:
+        INPUT_SPEC: ${{ inputs.spec }}
+        INPUT_BASE_SPEC: ${{ inputs.base-spec }}
+        INPUT_FAIL_ON_BREAKING: ${{ inputs.fail-on-breaking }}
+        INPUT_COMMENT: ${{ inputs.comment }}
+        INPUT_API_URL: ${{ inputs.api-url }}
+        GH_TOKEN: ${{ github.token }}
+      run: ${{ github.action_path }}/entrypoint.sh
